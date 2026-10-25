@@ -2,7 +2,7 @@
 
 這份教材用一個完整的開發情境貫穿：平台組要為訂單服務加上「優惠券折抵」功能，從開 Issue、開 Draft PR 列工項，一路走到 Production 上線與回滾。每一章都接續同一個情境。
 
-第一階段以 GitHub、GitHub Actions、Argo CD、AKS 示範；最後一章對照 Azure DevOps，作為下一階段整合的基礎。
+第一階段以 GitHub、GitHub Actions、Argo CD、AKS 示範；第 11 章在真實的 Azure DevOps 組織上重走同一個情境（Boards、Repos、Branch Policies、Pipelines、Argo CD 改接 Azure Repos），附 Step by Step 操作截圖。
 
 ## 目錄
 
@@ -22,5 +22,6 @@
 | 第 9 章 Secrets 與安全 | [docs/ch09-secrets-security.md](docs/ch09-secrets-security.md) |
 | 第 10 章 稽核與可觀測性 | [docs/ch10-audit-observability.md](docs/ch10-audit-observability.md) |
 | Azure DevOps 整合預告 | [docs/11-azure-devops-preview.md](docs/11-azure-devops-preview.md) |
+| 第 11 章 Azure DevOps 整合：Step by Step 實作 | [docs/ch11-azure-devops.md](docs/ch11-azure-devops.md) |
 | 實作練習與檢核表 | [docs/12-labs.md](docs/12-labs.md) |
 | 附錄：範本與名詞對照 | [docs/13-appendix.md](docs/13-appendix.md) |
