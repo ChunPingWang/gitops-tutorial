@@ -21,6 +21,6 @@
 | 第 8 章 環境晉升與回滾 | [docs/ch08-promotion-rollback.md](docs/ch08-promotion-rollback.md) |
 | 第 9 章 Secrets 與安全 | [docs/ch09-secrets-security.md](docs/ch09-secrets-security.md) |
 | 第 10 章 稽核與可觀測性 | [docs/ch10-audit-observability.md](docs/ch10-audit-observability.md) |
-| Azure DevOps 整合預告 | docs/11-azure-devops-preview.md（撰寫中） |
-| 實作練習與檢核表 | docs/12-labs.md（撰寫中） |
-| 附錄：範本與名詞對照 | docs/13-appendix.md（撰寫中） |
+| Azure DevOps 整合預告 | [docs/11-azure-devops-preview.md](docs/11-azure-devops-preview.md) |
+| 實作練習與檢核表 | [docs/12-labs.md](docs/12-labs.md) |
+| 附錄：範本與名詞對照 | [docs/13-appendix.md](docs/13-appendix.md) |
