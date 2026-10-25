@@ -17,8 +17,8 @@
 | 第 4 章 CI：PR 驗證 Pipeline | [docs/ch04-ci-pr-check.md](docs/ch04-ci-pr-check.md) |
 | 第 5 章 Review 與合併 | [docs/ch05-review-merge.md](docs/ch05-review-merge.md) |
 | 第 6 章 交付：Image 發布與 Config Repo PR | [docs/ch06-release.md](docs/ch06-release.md) |
-| 第 7 章 CD：Argo CD 自動 Reconcile | docs/ch07-cd-argocd.md（撰寫中） |
-| 第 8 章 環境晉升與回滾 | docs/ch08-promotion-rollback.md（撰寫中） |
+| 第 7 章 CD：Argo CD 自動 Reconcile | [docs/ch07-cd-argocd.md](docs/ch07-cd-argocd.md) |
+| 第 8 章 環境晉升與回滾 | [docs/ch08-promotion-rollback.md](docs/ch08-promotion-rollback.md) |
 | 第 9 章 Secrets 與安全 | docs/ch09-secrets-security.md（撰寫中） |
 | 第 10 章 稽核與可觀測性 | docs/ch10-audit-observability.md（撰寫中） |
 | Azure DevOps 整合預告 | docs/11-azure-devops-preview.md（撰寫中） |
