@@ -13,11 +13,12 @@
 | 第幾章 | GitHub 做法 | Azure DevOps 對應 | 差異重點 |
 | --- | --- | --- | --- |
 | 2 | Issue + Issue Template | Boards 的 User Story（Agile 流程） | 驗收條件有專屬欄位 Acceptance Criteria |
+| 2 | Milestone、跨 Issue 的規劃 | Epic → Feature → User Story → Task 的階層 | 階層是 Boards 內建的，見 Step 2 |
 | 2 | Draft PR | Azure Repos 的 Draft PR（Create as draft） | Draft 狀態不通知 Reviewer |
 | 2 | `Closes #42` | 在 commit 或 PR 寫 `AB#1`，或在 PR 的 Work items 區塊連結 | 合併時可勾「Complete associated work items」自動關閉 |
 | 2 | `.github/pull_request_template.md` | `.azuredevops/pull_request_template.md` | 路徑不同，語法相同（Markdown checklist） |
 | 4 | GitHub Actions `pr-check.yml` | Azure Pipelines YAML + Branch Policy 的 Build validation | Azure Repos 的 PR 觸發由 Branch Policy 控制，不用 `pr:` 區塊 |
-| 4 | `if: github.event.pull_request.draft == false` | 無預定義變數，需呼叫 PR API 取得 `isDraft` | 見 11.6 |
+| 4 | `if: github.event.pull_request.draft == false` | 無預定義變數，需呼叫 PR API 取得 `isDraft` | 見 Step 4 |
 | 5 | Branch Protection | Branch Policies + Repo Security | 最少審核人數、連結 Work Item、留言需解決、只允許 Squash |
 | 5 | CODEOWNERS | Branch Policy 的 Automatically included reviewers + 路徑過濾 | ADO 不讀 CODEOWNERS 檔 |
 | 6 | `azure/login` + OIDC | Service Connection（Workload Identity Federation） | 一樣沒有長期密碼 |
@@ -25,6 +26,7 @@
 | 6、9 | cosign keyless（GitHub OIDC → Fulcio） | cosign 搭配 Key Vault 金鑰（`azurekms://`） | Azure Pipelines 不是 Sigstore 的 keyless 身分來源 |
 | 7 | Argo CD 讀 GitHub（GitHub App） | Argo CD 讀 Azure Repos（Azure Workload Identity 或 PAT） | Application 只改 `repoURL` |
 | 7 | GitHub Webhook → `/api/webhook` | Service Hooks（Code pushed）→ `/api/webhook` | 可設 Basic Auth |
+| 8 | GitHub Environments | Azure Pipelines Environments（Approvals and checks） | GitOps 下批准點仍留在 Config Repo 的 PR，見 Step 12 |
 | 10 | git log + PR 歷史 | git log + PR 歷史 + Work Item 雙向連結 + Auditing | Work Item 自動顯示相關 commit 與 PR |
 
 ## 11.2 示範環境
@@ -65,6 +67,17 @@ Boards → Work items → New Work Item → **User Story**。
 ![User Story #1，驗收條件放在 Acceptance Criteria 欄位](images/ch11/02-work-item.jpg)
 
 右側的 **Development** 區塊目前是空的，等 Step 7 有 commit 與 PR 之後會自動長出連結。
+
+Agile 流程的 Work Item 有內建階層：**Epic → Feature → User Story → Task**。第 2 章「跨多個 PR 的規劃回到 Issue 或 Milestone」在 ADO 的對應是：
+
+| 層級 | 本情境的例子 | 誰維護 |
+| --- | --- | --- |
+| Epic | 雙十一活動 | 老陳 |
+| Feature | 結帳優惠券 | 老陳 |
+| User Story | #1 結帳支援優惠券折抵（本章） | 老陳寫驗收條件 |
+| Task | 實作工項（可選，見 Step 7） | 小林 |
+
+User Story 用 Related Work → **Add an existing work item as a parent** 掛到 Feature 下，Boards 的 Backlog 就能看到整個活動的進度。第 3 章被移出範圍的「優惠券使用次數上限」，在 ADO 開成同一個 Feature 底下的另一張 User Story。
 
 用 CLI 建立的等效指令（需先 `az extension add --name azure-devops`）：
 
@@ -320,6 +333,17 @@ az repos pr create --draft true \
 
 ![User Story 1 的 Development 區塊自動連結 PR 與 commit](images/ch11/15-work-item-links.jpg)
 
+### 工項 Checklist：PR 描述還是 Task Work Item
+
+第 2 章把工項寫在 Draft PR 的 Checklist。ADO 有兩條路：
+
+| 做法 | 優點 | 缺點 |
+| --- | --- | --- |
+| PR 描述的 `- [ ]`（本章做法） | 跟程式碼在同一頁，Reviewer 一眼看到 | ADO 的 PR 列表不顯示「3 of 9 tasks」這種進度，要點進 PR 才看得到 |
+| User Story 底下的 Task Work Item，並連到 PR | Boards 的 Sprint 看板與燃盡圖看得到進度 | 工項散在 Boards，Reviewer 要切頁面 |
+
+建議兩者並用：Task 只列需要排進 Sprint 的大項（例如「CouponClient」「feature flag 接線」），PR Checklist 列細項。不要兩邊各寫一份相同清單，否則一定會有一邊沒更新。
+
 ## Step 8 第一次執行 PR 驗證：兩個新組織常見的關卡
 
 小林在 PR 上按 **Queue** 跑 `pr-check`，遇到兩個 GitHub 上不會遇到的關卡。
@@ -406,6 +430,8 @@ Publish 之後的流程對應第 5 章：
 4. Complete 對話框的 Merge type 只會出現 **Squash commit**；勾選 **Complete associated work items after merging**（User Story 會轉為 Resolved/Closed）與 **Delete feat/1-coupon-discount after merging**。
 
 Squash commit 訊息沿用第 5 章的格式，第一行用 PR 標題 `feat: coupon discount at checkout`，第 6 章的 semantic-release 才算得出 1.8.0。
+
+與 GitHub 不同的地方：Azure Repos 預設的 Squash 訊息會在 PR 描述後自動附上 **Related work items: #1**。這行不影響 semantic-release，它只看第一行的類型（`feat:`），但也代表 PR 標題必須守 Conventional Commits，Complete 對話框裡不要改掉第一行。
 
 ## Step 10 交付：release Pipeline 與 Config Repo 的 PR
 
@@ -578,6 +604,15 @@ stringData:
 
 ADO 的 PR 頁面內建 Revert 按鈕，與第 8 章「回滾也是 PR」的原則完全一致：回滾後的 commit 仍在 main，Argo CD 依舊從 Git 拉取。
 
+### Environments 的 Approvals 要不要用
+
+ADO 的 Pipelines → Environments 可以設 **Approvals and checks**，要求人工批准後 Pipeline 才繼續，常被拿來做「prod 部署要主管批准」。在 GitOps 裡不建議用它擋部署：
+
+- 部署不是 Pipeline 做的，是 Argo CD 從 Config Repo 拉的。Pipeline 上的批准擋不住有人直接改 Config Repo。
+- 批准紀錄會分散在 Pipeline 執行紀錄與 Git 兩處，第 10 章「git log 就是稽核軌跡」就不成立。
+
+所以本教材的批准點只有一個：Config Repo 的 PR，由 Step 6 的路徑審核規則強制。Environments 可以保留給「部署後的自動檢查」這類不需要人按的用途，例如呼叫監控 API 確認錯誤率沒有上升。
+
 ## 常見問題
 
 | 症狀 | 原因 | 處理 |
@@ -588,6 +623,13 @@ ADO 的 PR 頁面內建 Revert 按鈕，與第 8 章「回滾也是 PR」的原�
 | semantic-release 推 tag 失敗 403 | Build Service 沒有 Create tag 權限 | Repo Security 授權 |
 | `az repos pr create` 失敗 TF401027 | Build Service 對 platform-gitops 沒有 Contribute to pull requests | Repo Security 授權 |
 | Argo CD 顯示 authentication required | repo-server 的 Workload Identity 未生效或身分不在 ADO 組織中 | 檢查 Pod label、SA annotation 與 ADO 使用者清單 |
+
+## 延伸
+
+本章之後可以繼續補的兩個主題：
+
+- **Boards 的端到端追溯**：Epic → Feature → Story → PR → Build → Release 的連結，搭配 Delivery Plans 看跨團隊時程。
+- **Wiki 與 Dashboard**：用 ADO Dashboard 顯示各環境目前的版本，以及第 10 章的 DORA 指標（部署頻率、從 PR 合併到 Healthy 的時間），資料來源是 Git 與 Argo CD 的事件。
 
 ## 本章在情境中的位置
 
