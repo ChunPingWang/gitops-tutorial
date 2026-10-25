@@ -133,7 +133,7 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  GO_VERSION: '1.22.8'
+  GO_VERSION: '1.25.7'   # 原為 1.22.8，因 CVE-2025-68121 升級（見 Step 8）
 
 stages:
   - stage: test
@@ -359,13 +359,48 @@ pool:
   name: aks-agents        # 改用自建 agent pool
 ```
 
-> 本示範組織在撰寫時尚未取得 hosted parallelism，所以截圖停在排隊失敗。取得額度後，在 PR 頁面重新 Queue 即可；Draft 狀態下 `image` stage 會顯示 Skipped due to conditions，轉 Publish 後重跑才會建置與掃描。
+本示範的 `cpingwang0948` 組織沒有額度，所以以下的綠燈截圖改在另一個已有 1 個免費 Microsoft-hosted parallel job 的組織 `chunping` 重建同一套專案取得。免費額度只有 1 個 job，四個 job 依序排隊，第一次執行從 Queue 到完成約 11 分鐘。
+
+### 第一次綠燈：Draft 狀態跳過 image
+
+Draft PR 上按 Queue：`meta` job 的 log 印出 `PR 1 isDraft=true`，`test` 與 `manifests` 通過，`image` 依條件跳過。
+
+![Draft 狀態的 PR 驗證：test、manifests 綠燈，image Skipped due to conditions](images/ch11/17-draft-run-green.jpg)
+
+### 轉 Publish 後要重跑：Draft 的綠燈會被沿用
+
+小林按 **Publish** 後，PR 頁面立刻顯示 **All required checks succeeded**，但這個結果來自 Draft 時那次跳過 image 的執行，建置與掃描其實沒跑過。Build validation 只看「最近一次執行是否成功、是否過期」，不知道執行時跳過了哪些 stage。
+
+所以 Publish 後一定要到 **View checks** → `pr-check` → **Re-queue** 重跑一次。團隊約定可以寫進 PR 範本的「轉 Ready 前自我檢查」。
+
+### 第二次執行：Trivy 擋下 Critical 漏洞
+
+重跑後 `image` stage 執行，`docker build` 成功，但 Trivy 在 Go 執行檔裡找到標準函式庫的 Critical 漏洞 CVE-2025-68121（crypto/tls 憑證驗證問題），Installed Version 是 v1.22.8，修正版本為 1.24.13、1.25.7、1.26.0-rc.3。Pipeline 依設計紅燈：
+
+![Trivy 在 Go 1.22.8 標準函式庫找到 CVE-2025-68121，pr-check 失敗](images/ch11/18-trivy-blocked.jpg)
+
+這和第 4 章小林第 2 天被 Trivy 擋下是同一件事，只是時間推移後連 1.22.8 也有了新的 Critical 漏洞。處理方式一樣：在同一個 PR 補一個 commit，把 `Dockerfile` 的基底映像檔與 Pipeline 的 `GO_VERSION` 升到 1.25.7。
+
+```bash
+git commit -am "fix(build): bump Go to 1.25.7 for CVE-2025-68121 (AB#1)"
+git push
+```
+
+### 第三次執行：全部綠燈
+
+push 之後 Build validation 因來源分支更新自動觸發（`queueOnSourceUpdateOnly`），這次 `test`、`image`、`manifests` 三個 stage 全部通過：
+
+![完整的 PR 驗證：test、image、manifests 全部通過](images/ch11/19-full-run-green.jpg)
+
+PR 頁面的 Checks：`pr-check`、Work items must be linked、Comments must be resolved 三項必要檢查都通過，只剩「At least 1 reviewer must approve」等阿華批准：
+
+![PR !1 的必要檢查全部通過](images/ch11/20-pr-checks-green.jpg)
 
 ## Step 9 Review 與合併
 
 Publish 之後的流程對應第 5 章：
 
-1. 小林按 **Publish**，Reviewer 才會收到通知。Draft 期間跑過的 Build validation 若已過期（本示範設 12 小時），按 Queue 重跑一次，這次 `image` stage 會執行。
+1. 小林按 **Publish**，Reviewer 才會收到通知。接著到 View checks 對 `pr-check` 按 **Re-queue**，讓 `image` stage 真正執行（見 Step 8）。
 2. 阿華逐行審查，留言後狀態為 Active；小林修正並 push，阿華的批准會被重置（Branch Policy 的「Reset all approval votes」），需重新批准。
 3. 所有留言 Resolve、`pr-check` 綠燈、至少一人批准、已連 Work Item 之後，**Complete** 按鈕才能按。
 4. Complete 對話框的 Merge type 只會出現 **Squash commit**；勾選 **Complete associated work items after merging**（User Story 會轉為 Resolved/Closed）與 **Delete feat/1-coupon-discount after merging**。
@@ -556,4 +591,4 @@ ADO 的 PR 頁面內建 Revert 按鈕，與第 8 章「回滾也是 PR」的原�
 
 ## 本章在情境中的位置
 
-平台組在 ADO 上重建了第 1 到第 10 章的流程：User Story #1 對應 Issue #42，Draft PR !1 有八項工項與三個 commit，Branch Policies 取代 Branch Protection 與 CODEOWNERS，三條 Pipeline 已建立並掛上 Build validation。下一步是取得 hosted parallelism 或建好自建 agent，讓 PR 驗證跑出第一個綠燈，接著 Publish、合併，release Pipeline 產出 1.8.0，往後的晉升與回滾都由 Argo CD 從 Azure Repos 拉取完成。
+平台組在 ADO 上重建了第 1 到第 10 章的流程：User Story #1 對應 Issue #42，Draft PR !1 有八項工項與三個 commit，Branch Policies 取代 Branch Protection 與 CODEOWNERS，三條 Pipeline 已建立並掛上 Build validation。PR 驗證經歷一次 Trivy 紅燈、升級 Go 後全部綠燈，只等阿華批准；接著合併，release Pipeline 產出 1.8.0，往後的晉升與回滾都由 Argo CD 從 Azure Repos 拉取完成。
