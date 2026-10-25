@@ -14,9 +14,9 @@
 | 第 1 章 Repo 結構與分支策略 | [docs/ch01-repo-structure.md](docs/ch01-repo-structure.md) |
 | 第 2 章 規劃：Issue、Draft PR 與工項 Checklist | [docs/ch02-planning-draft-pr.md](docs/ch02-planning-draft-pr.md) |
 | 第 3 章 開發：Commit 規範與小步推送 | [docs/ch03-development.md](docs/ch03-development.md) |
-| 第 4 章 CI：PR 驗證 Pipeline | docs/ch04-ci-pr-check.md（撰寫中） |
-| 第 5 章 Review 與合併 | docs/ch05-review-merge.md（撰寫中） |
-| 第 6 章 交付：Image 發布與 Config Repo PR | docs/ch06-release.md（撰寫中） |
+| 第 4 章 CI：PR 驗證 Pipeline | [docs/ch04-ci-pr-check.md](docs/ch04-ci-pr-check.md) |
+| 第 5 章 Review 與合併 | [docs/ch05-review-merge.md](docs/ch05-review-merge.md) |
+| 第 6 章 交付：Image 發布與 Config Repo PR | [docs/ch06-release.md](docs/ch06-release.md) |
 | 第 7 章 CD：Argo CD 自動 Reconcile | docs/ch07-cd-argocd.md（撰寫中） |
 | 第 8 章 環境晉升與回滾 | docs/ch08-promotion-rollback.md（撰寫中） |
 | 第 9 章 Secrets 與安全 | docs/ch09-secrets-security.md（撰寫中） |
